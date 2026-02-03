@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>One UI 8 - Фінальний</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'SamsungOne', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- ДИНАМІЧНИЙ ФОН (ЗМІНЮВАНИЙ) --- */
+        .wallpaper {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            z-index: -2;
+            transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        /* Ефект рідкого скла */
+        .liquid {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%);
+            animation: float 25s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes float {
+            0% { transform: rotate(0deg) translate(-50%, -50%); }
+            100% { transform: rotate(360deg) translate(-50%, -50%); }
+        }
+
+        /* Рамка телефону */
+        .phone {
+            width: 360px;
+            height: 780px;
+            background: rgba(10, 10, 10, 0.5);
+            border-radius: 50px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+            border: 8px solid #000;
+            z-index: 1;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Статус бар */
+        .status-bar {
+            height: 40px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 15px;
+            align-items: center;
+            font-size: 14px;
+            color: #aaa;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Віджет погоди та часу */
+        .widget-header {
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .big-time {
+            font-size: 50px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .date-location {
+            font-size: 16px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        .weather-info {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            color: #ccc;
+        }
+
+        /* Іконки додатків */
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding: 15px;
+        }
+
+        .app-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 15px 5px;
+            color: white;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
+            text-align: center;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-btn::after {
+            content: '';
+            position: absolute;
+            top: -10px; left: -10px;
+            width: 20px; height: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            transform: rotate(45deg);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .app-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .app-btn:active::after {
+            opacity: 1;
+            top: -30px;
+            left: -30px;
+        }
+
+        /* Панель навігації */
+        .nav-bar {
+            display: flex;
+            justify-content: center;
+            padding: 15px 0;
+            gap: 20px;
+        }
+
+        .nav-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(0.9);
+        }
+
+        /* --- УНІВЕРСАЛЬНЕ МОДАЛЬНЕ ВІКНО --- */
+        .modal {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: #000;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            z-index: 100;
+            overflow: hidden;
+            height: 100%;
+        }
+
+        .modal.active {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            text-align: center;
+            padding: 15px;
+            font-size: 18px;
+            color: #666;
+            border-bottom: 1px solid #222;
+            position: relative;
+        }
+
+        .close-btn {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+        }
+
+        /* --- КАЛЬКУЛЯТОР --- */
+        .calc-display {
+            width: 100%;
+            height: 180px;
+            background: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 20px;
+            font-size: 32px;
+            color: white;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .calc-history {
+            font-size: 18px;
+            color: #555;
+            height: 30px;
+            margin-bottom: 5px;
+            width: 100%;
+            text-align: right;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 20px;
+        }
+
+        .calc-btn {
+            padding: 25px 5px;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.1s;
+        }
+
+        .calc-btn:active {
+            transform: scale(0.85);
+        }
+
+        .num { background: #1c1c1c; color: white; }
+        .op { background: #ff9500; color: white; }
+        .eq { background: #333; color: white; }
+        .func { background: #111; color: #007AFF; font-size: 16px; }
+
+        /* --- НОТАТКИ --- */
+        .notes-container {
+            padding: 20px;
+            height: 100%;
+            box-sizing: border-box;
+        }
+
+        #notesInput {
+            width: 100%;
+            height: 80%;
+            background: #111;
+            color: white;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 18px;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        /* --- ПЛЕЙ МАРКЕТ --- */
+        .play-container {
+            padding: 20px;
+            overflow-y: auto;
+            height: 100%;
+            background: #000;
+        }
+
+        .play-title {
+            color: white;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .game-card {
+            background: #111;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .game-card:active {
+            transform: scale(0.95);
+            background: #222;
+        }
+
+        .game-icon {
+            width: 80px;
+            height: 80px;
+            background: #333;
+            margin: 0 auto 10px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Піксель-арт ефект */
+        .pixel {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            opacity: 0;
+            border-radius: 1px;
+        }
+
+        .game-name {
+            color: white;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .game-desc {
+            color: #666;
+            font-size: 12px;
+        }
+
+        /* --- КАМЕРА --- */
+        .camera-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* Імітація відео/прев'ю */
+        .camera-preview {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1a1a1a 25%, #000 25%, #000 50%, #1a1a1a 50%, #1a1a1a 75%, #000 75%, #000);
+            background-size: 20px 20px;
+            filter: blur(1px) brightness(0.8);
+        }
+
+        .capture-btn {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #333;
+            border: 3px solid white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .capture-btn::after {
+            content: '';
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        /* --- ШПАЛЕРИ (НОВА ПРОГРАМА) --- */
+        .wallpaper-container {
+            padding: 20px;
+            overflow-y: auto;
+            height: 100%;
+            background: #000;
+        }
+
+        .wallpaper-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .wallpaper-item {
+            border-radius: 15px;
+            padding: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .wallpaper-item:active {
+            transform: scale(0.95);
+        }
+
+        .wallpaper-img {
+            width: 100%;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin-bottom: 8px;
+        }
+
+        /* Прев'ю градієнтів */
+        .gradient-preview {
+            width: 100%;
+            height: 130px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .preset-1 { background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); }
+        .preset-2 { background: linear-gradient(135deg, #1A2980, #26D0CE); }
+        .preset-3 { background: linear-gradient(135deg, #654ea3, #eaafc8); }
+        .preset-4 { background: linear-gradient(135deg, #ee9ca7, #ffdde1); }
+        .preset-5 { background: linear-gradient(135deg, #434343, #000000); }
+        .preset-6 { background: linear-gradient(135deg, #F093FB, #F5576C); }
+
+    </style>
+</head>
+<body>
+
+    <!-- Динамічний фон -->
+    <div class="wallpaper" id="dynamicWallpaper"></div>
+    <div class="liquid"></div>
+
+    <!-- Екран телефону -->
+    <div class="phone">
+        <div class="screen">
+
+            <!-- Статус бар -->
+            <div class="status-bar">
+                <div>9:41</div>
+                <div>5G</div>
+            </div>
+
+            <!-- Віджети -->
+            <div class="widget-header">
+                <div class="big-time" id="time">14:30</div>
+                <div class="date-location">Середа, 4 Лютий • Київ</div>
+                <div class="weather-info">☁️ +15°C</div>
+            </div>
+
+            <!-- Іконки додатків -->
+            <div class="app-grid">
+                <div class="app-btn" onclick="openApp('calculator')">Калькулятор</div>
+                <div class="app-btn" onclick="openApp('notes')">Нотатки</div>
+                <div class="app-btn" onclick="openApp('play')">Ігри</div>
+                <div class="app-btn" onclick="openApp('camera')">Камера</div>
+                <!-- Додайте сюди нову іконку для Шпалер -->
+                <div class="app-btn" onclick="openApp('wallpaper')">Шпалери</div>
+            </div>
+
+            <!-- Навігація -->
+            <div class="nav-bar">
+                <div class="nav-btn">⇤</div>
+                <div class="nav-btn">●</div>
+                <div class="nav-btn">⇥</div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- --- МОДАЛЬНІ ВІКНА --- -->
+
+    <!-- Калькулятор -->
+    <div class="modal" id="calculator">
+        <div class="modal-header">Калькулятор <span class="close-btn" onclick="closeApp('calculator')">✕</span></div>
+        <div class="calc-display">
+            <div class="calc-history" id="calcHistory"></div>
+            <div id="calcDisplay">0</div>
+        </div>
+        <div class="calc-buttons">
+            <button class="calc-btn func" onclick="clearDisplay()">C</button>
+            <button class="calc-btn func" onclick="appendValue('/')">/</button>
+            <button class="calc-btn func" onclick="appendValue('*')">×</button>
+            <button class="calc-btn func" onclick="backspace()">⌫</button>
+
+            <button class="calc-btn num" onclick="appendValue('7')">7</button>
+            <button class="calc-btn num" onclick="appendValue('8')">8</button>
+            <button class="calc-btn num" onclick="appendValue('9')">9</button>
+            <button class="calc-btn func" onclick="appendValue('-')">-</button>
+
+            <button class="calc-btn num" onclick="appendValue('4')">4</button>
+            <button class="calc-btn num" onclick="appendValue('5')">5</button>
+            <button class="calc-btn num" onclick="appendValue('6')">6</button>
+            <button class="calc-btn func" onclick="appendValue('+')">+</button>
+
+            <button class="calc-btn num" onclick="appendValue('1')">1</button>
+            <button class="calc-btn num" onclick="appendValue('2')">2</button>
+            <button class="calc-btn num" onclick="appendValue('3')">3</button>
+            <button class="calc-btn eq" onclick="calculate()" style="grid-row: span 2">=</button>
+
+            <button class="calc-btn num" onclick="appendValue('0')" style="grid-column: span 2">0</button>
+            <button class="calc-btn num" onclick="appendValue('.')">.</button>
+        </div>
+    </div>
+
+    <!-- Нотатки -->
+    <div class="modal" id="notes">
+        <div class="modal-header">Нотатки <span class="close-btn" onclick="closeApp('notes')">✕</span></div>
+        <div class="notes-container">
+            <textarea id="notesInput" placeholder="Введіть текст..."></textarea>
+        </div>
+    </div>
+
+    <!-- Ігри (Плей Маркет) -->
+    <div class="modal" id="play">
+        <div class="modal-header">Ігрова збірка <span class="close-btn" onclick="closeApp('play')">✕</span></div>
+        <div class="play-container">
+            <h2 class="play-title">Виберіть гру</h2>
+            <div class="game-grid">
+                <div class="game-card" onclick="alert('Запуск Гра 1!')">
+                    <div class="game-icon">🎮</div>
+                    <div class="game-name">Гонки</div>
+                    <div class="game-desc">Швидкість та драйв</div>
+                </div>
+                <div class="game-card" onclick="alert('Запуск Гра 2!')">
+                    <div class="game-icon">🧩</div>
+                    <div class="game-name">Пазли</div>
+                    <div class="game-desc">Тренуй мізки</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Камера -->
+    <div class="modal" id="camera">
+        <div class="modal-header">Камера <span class="close-btn" onclick="closeApp('camera')">✕</span></div>
+        <div class="camera-container">
+            <div class="camera-preview"></div>
+                        <div class="capture-btn" onclick="takePhoto()">
+                <div class="flash" id="flash"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- --- ШПАЛЕРИ (МОДАЛЬНЕ ВІКНО) --- -->
+    <div class="modal" id="wallpaper">
+        <div class="modal-header">Вибір шпалер <span class="close-btn" onclick="closeApp('wallpaper')">✕</span></div>
+        <div class="wallpaper-container">
+            <h3 style="color: white; margin-bottom: 15px;">Градієнти:</h3>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-item" onclick="changeWallpaper('preset-1')">
+                    <div class="gradient-preview preset-1"></div>
+                    <div>Космос</div>
+                </div>
+                <div class="wallpaper-item" onclick="changeWallpaper('preset-2')">
+                    <div class="gradient-preview preset-2"></div>
+                    <div>Океан</div>
+                </div>
+                <div class="wallpaper-item" onclick="changeWallpaper('preset-3')">
+                    <div class="gradient-preview preset-3"></div>
+                    <div>Ромашка</div>
+                </div>
+                <div class="wallpaper-item" onclick="changeWallpaper('preset-4')">
+                    <div class="gradient-preview preset-4"></div>
+                    <div>Світанок</div>
+                </div>
+            </div>
+
+            <h3 style="color: white; margin: 25px 0 15px;">Зображення:</h3>
+            <div class="wallpaper-grid">
+                <div class="wallpaper-item" onclick="changeWallpaper('mountains')">
+                    <img src="https://source.unsplash.com/random/200x300/?mountains" alt="Гірський пейзаж" class="wallpaper-img">
+                    <div>Гіри</div>
+                </div>
+                <div class="wallpaper-item" onclick="changeWallpaper('city')">
+                    <img src="https://source.unsplash.com/random/200x300/?city,night" alt="Місто вночі" class="wallpaper-img">
+                    <div>Місто</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- ГЛОБАЛЬНІ ЗМІННІ ---
+        let currentWallpaper = document.getElementById('dynamicWallpaper');
+        const timeElement = document.getElementById('time');
+
+        // --- ФУНКЦІЇ ДЛЯ ПРОГРАМ ---
+        
+        // Відкриття програм
+        function openApp(appName) {
+            document.getElementById(appName).classList.add('active');
+        }
+
+        // Закриття програм
+        function closeApp(appName) {
+            document.getElementById(appName).classList.remove('active');
+        }
+
+        // --- КАЛЬКУЛЯТОР ---
+        let display = document.getElementById('calcDisplay');
+        let history = document.getElementById('calcHistory');
+
+        function appendValue(value) {
+            if (display.innerText === '0' && value !== '.') display.innerText = '';
+            display.innerText += value;
+        }
+
+        function clearDisplay() {
+            display.innerText = '0';
+            history.innerText = '';
+        }
+
+        function backspace() {
+            display.innerText = display.innerText.slice(0, -1);
+            if (display.innerText === '') display.innerText = '0';
+        }
+
+        function calculate() {
+            try {
+                history.innerText = display.innerText;
+                display.innerText = eval(display.innerText);
+            } catch (e) {
+                display.innerText = 'Помилка';
+            }
+        }
+
+        // --- НОТАТКИ ---
+        // Автозбереження в localStorage
+        const notesInput = document.getElementById('notesInput');
+        
+        // Завантаження тексту при відкритті
+        window.onload = function() {
+            if (localStorage.getItem('notes')) {
+                notesInput.value = localStorage.getItem('notes');
+            }
+            
+            // Ініціалізація часу
+            updateTime();
+            setInterval(updateTime, 1000);
+        };
+
+        notesInput.addEventListener('input', function() {
+            localStorage.setItem('notes', notesInput.value);
+        });
+
+        function updateTime() {
+            const now = new Date();
+            timeElement.innerText = now.toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // --- КАМЕРА ---
+        // Імітація живого відео (зміна фокусу)
+        let hue = 0;
+        setInterval(() => {
+            // Змінюємо насиченість фону, щоб імітувати "дихання" камери
+            hue = (hue + 1) % 360;
+            document.querySelector('.camera-preview').style.filter = `blur(1px) brightness(0.8) hue-rotate(${hue}deg)`;
+        }, 100);
+
+        function takePhoto() {
+            const flash = document.getElementById('flash');
+            flash.style.opacity = '1';
+            flash.style.transform = 'scale(1)';
+            
+            // Скидання анімації
+            void flash.offsetWidth;
+            flash.style.transform = 'scale(3)';
+            flash.style.opacity = '0';
+            
+            // Симуляція звуку затвора
+            alert('Знімок зроблено!');
+        }
+
+        // --- ШПАЛЕРИ (ОСНОВНА ФУНКЦІЯ) ---
+        function changeWallpaper(preset) {
+            // Приховуємо ефект рідкого скла для чітких зображень
+            document.querySelector('.liquid').style.opacity = '0.3';
+            
+            switch(preset) {
+                case 'preset-1':
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
+                    break;
+                case 'preset-2':
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #1A2980, #26D0CE)';
+                    break;
+                case 'preset-3':
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #654ea3, #eaafc8)';
+                    break;
+                case 'preset-4':
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #ee9ca7, #ffdde1)';
+                    break;
+                case 'preset-5':
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #434343, #000000)';
+                    break;
+                case 'mountains':
+                case 'city':
+                    // Для зображень увімкнемо фонове зображення
+                    currentWallpaper.style.background = `url('https://source.unsplash.com/random/800x600/?${preset}') center/cover`;
+                    document.querySelector('.liquid').style.opacity = '0'; // Вимикаємо рідке скло для реалістичних фото
+                    break;
+                default:
+                    currentWallpaper.style.background = 'linear-gradient(135deg, #0f0c29, #302b63, #24243e)';
+            }
+            
+            // Повідомлення користувачеві
+            alert(`Шпалери змінено: ${preset}`);
+        }
+
+        // --- ДОДАТКОВО: ЕФЕКТ ПІКСЕЛІВ ДЛЯ ІКОНОК ---
+        // Додаємо випадкові пікселі в іконки ігор
+        document.querySelectorAll('.game-icon').forEach(icon => {
+            for (let i = 0; i < 5; i++) {
+                const pixel = document.createElement('div');
+                pixel.classList.add('pixel');
+                pixel.style.left = Math.random() * 60 + 'px';
+                pixel.style.top = Math.random() * 60 + 'px';
+                pixel.style.backgroundColor = getRandomColor();
+                icon.appendChild(pixel);
+            }
+        });
+
+        function getRandomColor() {
+            const colors = ['#FF5722', '#E91E63', '#9C27B0', '#2196F3', '#00BCD4', '#4CAF50', '#FFC107'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+    </script>
+</body>
+</html>
+
